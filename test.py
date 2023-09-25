@@ -118,9 +118,9 @@ def possibleMoves(piece, m, n):
 
 
 
-pos = 'a8'
+pos = 'c4'
 m, n = alphaToIndex[pos[0]], int(pos[1]) - 1
-piece = 'r'
+piece = 'k'
 
 print(m,n)
 print("****")
