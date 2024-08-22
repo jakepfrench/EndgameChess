@@ -3,6 +3,7 @@
 # Copyright (c) [2023]
 # J. French
 # emailjakefrench@googlemail.com
+import json
 
 import pygame
 import sys
@@ -26,7 +27,8 @@ class EndgameChess:
         self.board = self.initialize()
         self.pieces = self.load(directory)
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
-        pygame.display.set_caption("Endgame Engine")
+        pygame.display.set_caption("Endgame Engine [(s) save / (l) load / just play]")
+
 
     def initialize(self):
         board = [   ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
@@ -47,12 +49,27 @@ class EndgameChess:
             pieces[p] = pic
         return pieces
 
-    def getClick(self):
-        pass
+    def highlightMove(self, pos):
+        if pos is not None:
+            r, c = int(pos[1]) - 1, (ord(pos[0]) - ord('a'))
+            p = self.board[r][c]
+            if p:
+                s = pygame.Surface((100, 100))
+                s.set_alpha(64)
+                s.fill((255, 255, 0))
+                self.screen.blit(s, (c * 100, (7 * 100) - (r * 100)))
+                return True
+        return False
 
-
-    def clickTocell(self):
-        pass
+    def clickTocell(self, xy):
+        col = int(xy[0] * (self.BOARD_SIZE / self.WIDTH))
+        row = int(xy[1] * (self.BOARD_SIZE / self.HEIGHT))
+        if 0 <= col < self.BOARD_SIZE and 0 <= row < self.BOARD_SIZE:
+            col_letter = chr(ord('a') + col)
+            row_number = str(8 - row)
+            return col_letter, row_number
+        else:
+            return None
 
     def rowcolToPosition(self, p, r, c):
         x, y = (self.SQUARE_SIZE*c), -(self.SQUARE_SIZE/15) + (self.SQUARE_SIZE*r)
@@ -63,7 +80,10 @@ class EndgameChess:
     def render(self):
         for r in range(self.BOARD_SIZE):
             for c in range(self.BOARD_SIZE):
-                color = self.WHITE if (r + c) % 2 == 0 else self.BLACK
+                if (r + c) % 2 == 0:
+                    color = self.WHITE
+                else:
+                    color = self.BLACK
                 pygame.draw.rect(self.screen, color, (
                 c * self.SQUARE_SIZE, r * self.SQUARE_SIZE, self.SQUARE_SIZE, self.SQUARE_SIZE))
                 p = self.board[r][c]
@@ -71,75 +91,38 @@ class EndgameChess:
                     self.screen.blit(self.pieces[p], self.rowcolToPosition(p, r, c))
         pygame.display.flip()
 
+    def event(self):
+        # run through all possible eventrs
+        for event in pygame.event.get():
+            # if quit
+            if event.type == pygame.QUIT:
+                engine.running = False
+            # if load or save
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s:
+                    with open('EndgameBoard.json', 'w') as json_file:
+                        json.dump(self.board, json_file, indent=4)
+                elif event.key == pygame.K_l:
+                    try:
+                        with open("EndgameBoard.json") as json_file:
+                            self.board = json.load(json_file)
+                    except:
+                        print('error')
+            # if mouse button is pressed, the game's afoot
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pos = self.clickTocell(event.pos)
+                print(pos)
+                self.highlightMove(pos)
 
 
-#engine = EndgameChess(debug = False, screenSize = 800, directory = 'pieces')
-#while engine.running:
-#    engine.render()
-#pygame.quit()
-#sys.exit()
 
+engine = EndgameChess(debug = False, screenSize = 800, directory = 'pieces')
+while engine.running:
+    engine.event()
+    engine.render()
 
-
-
-
-
-
-
-# Function to get cell location from mouse click
-#def get_cell_from_click(x, y):
-#    col = x // SQUARE_SIZE
-#    row = y // SQUARE_SIZE
-#    if 0 <= col < BOARD_SIZE and 0 <= row < BOARD_SIZE:
-#        # Convert col (0-7) to letter (A-H) and row (0-7) to number (1-8)
-#        col_letter = chr(ord('A') + col)
-#        row_number = str(8 - row)
-#        return col_letter.lower() + row_number
-#    else:
-#        return None
-
-
-pygame.init()
-pygame.display.set_mode((100, 100))
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    pygame.display.flip()
 pygame.quit()
 sys.exit()
 
 
-#        elif event.type == pygame.MOUSEBUTTONDOWN:
-#            if event.button == 1:  # Left mouse button clicked
-#                x, y = event.pos
-#                cell = get_cell_from_click(x, y)
-#
-#    # Draw the chess board
-#    for row in range(BOARD_SIZE):
-#        for col in range(BOARD_SIZE):
-#            color = WHITE if (row + col) % 2 == 0 else BLACK
-#            pygame.draw.rect(screen, color, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
-#            p = board[row][col]
-#            if p in allPieces:
-#                screen.blit(pieces[p],  rowcolToPosition(p, row, col))
-#    if cell:
-#        r, c = int(cell[1])-1, (ord(cell[0]) - ord('a'))
-#        p = board[r][c]
-#        if p in allPieces:
-#            print("Clicked cell:", p, cell, r, c)
-#            s = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE))  # the size of your rect
-#            s.set_alpha(128)  # alpha level
-#            s.fill((255,255,0))  # this fills the entire surface
-#            screen.blit(s, (c * SQUARE_SIZE, (7 * SQUARE_SIZE) - (r * SQUARE_SIZE)))  # (0,0) are the top-left coordinates
-#
-#
-#        #pygame.draw.rect(screen, (255,255,204, 255)  , (c * SQUARE_SIZE, r * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
-#
-#
-#    pygame.display.flip()
-#
-# Quit Pygame
-#pygame.quit()
-#sys.exit()
+
